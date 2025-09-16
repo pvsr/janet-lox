@@ -31,7 +31,7 @@
     :number (<- (* :d+ (? (* "." :d+))))
     :string (* `"` (+ (<- (to `"`)) (error (constant "unterminated string"))) `"`)
     :main (any (+ :s
-                  (* "//" (to "\n"))
+                  (* "//" (any (if-not "\n" 1)))
                   ,;(seq [[str tok] :pairs double-operators] (token0 str tok))
                   ,;(seq [[str tok] :pairs single-operators] (token0 str tok))
                   ,(token1 :keyword-or-ident get-keyword)
