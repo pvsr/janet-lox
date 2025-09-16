@@ -1,7 +1,7 @@
 @{:author "Peter Rice"
-  :dependencies @["judge" "spork"]
+  :dependencies @["spork"]
   :description "Lox programming language, from the book Crafting Interpreters"
-  :jpm-dependencies @["spork" "judge"]
+  :jpm-dependencies @["spork"]
   :license "MIT"
   :name "lox"
   :version "0.0.1"}

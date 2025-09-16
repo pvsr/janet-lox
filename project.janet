@@ -3,7 +3,7 @@
   :description ```Implementation of the Lox programming language from Crafting Interpreters```
   :license "MIT"
   :author ```Peter Rice```
-  :dependencies @["spork" "judge"]
+  :dependencies @["spork"]
   :version "0.0.1")
 
 (declare-executable
