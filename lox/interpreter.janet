@@ -32,6 +32,19 @@
      token (errorf "Unknown operator %q" token))
     left right))
 
+(defn- declare-var [name]
+  (setdyn name @[]))
+
+(defn- set-var [name val]
+  (if-let [ref (dyn name)]
+    (do (array/clear ref) (array/push ref val))
+    (errorf "Undefined variable '%s'." name)))
+
+(defn- get-var [name]
+  (if-let [@[val] (dyn name)]
+    val
+    (errorf "Undefined variable '%s'." name)))
+
 (defn evaluate [expr]
   (match expr
     [:literal value] value
@@ -41,17 +54,22 @@
     [:logical left op right] (case ((op :token) 0)
                                :or (if-let [left (evaluate left)] left (evaluate right))
                                :and (if-let [left (evaluate left)] (evaluate right) left))
-    (errorf "Unknown expression type %q" (expr 0))))
+    [:assign {:token [:ident name]} value] (set-var name (evaluate value))
+    [:variable {:token [:ident name]}] (get-var name)
+    [ty] (errorf "Unknown expression type %s" ty)
+    (errorf "Invalid expression %q" expr)))
 
 (var execute nil)
 
 (defn- execute-block [stmts]
-  (each stmt stmts (execute stmt)))
+  # open new scope
+  (with-dyns []
+    (each stmt stmts (execute stmt))))
 
 (varfn execute [stmt]
   (match stmt
     [:print expr] (printf "%q" (evaluate expr))
-    [:expr expr] (xprintf (dyn :expr-out stderr) "%Q" (evaluate expr))
+    [:expr expr] (xprintf (dyn :expr-out @"") "%Q" (evaluate expr))
     # [:return word value] (throw return)
     [:if cond then else] (do
                            (cond
@@ -59,9 +77,13 @@
                              (not (nil? else)) (execute else)))
     [:while cond body] (while (evaluate cond) (execute body))
     [:block stmts] (execute-block stmts)
-    (errorf "Unknown statement type %q" (stmt 0))))
+    [:var {:token [:ident name]} init] (let [val (and init (evaluate init))]
+                                         (declare-var name)
+                                         (when init (set-var name val)))
+    [ty] (errorf "Unknown statement type %s" ty)
+    (errorf "Invalid statement %q" stmt)))
 
 (defn interpret [stmts]
+  (setdyn :locals @{})
   # TODO error handling
-  (each stmt stmts (try (execute stmt)
-                     ([e] (eprint e)))))
+  (each stmt stmts (execute stmt)))

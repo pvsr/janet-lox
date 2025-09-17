@@ -13,5 +13,6 @@
 (defn main [_ &opt path & args]
   (unless (empty? args) (error "expected 0 or 1 args"))
   (if (nil? path)
-    (repl/run process)
-    (with-dyns [:expr-out @""] (process (slurp path)))))
+
+    (with-dyns [:expr-out stderr] (repl/run process))
+    (process (slurp path))))

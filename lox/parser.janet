@@ -40,7 +40,7 @@
     [:nil] [:literal nil]
     [:num val] [:literal val]
     [:str val] [:literal val]
-    [:ident name] [:variable name]
+    [:ident name] [:variable token]
     [:left-paren] (do (def expr (expression parser))
                     (:consume parser :right-paren "Expect ')' after expression.")
                     [:grouping expr])))
@@ -90,7 +90,7 @@
   (when (def equals (:match parser :eq))
     (def value (assignment parser))
     (match expr
-      [:variable name] (set expr [:assignment name value])
+      [:variable name] (set expr [:assign name value])
       # TODO put equals token in error?
       _ (errorf "Invalid assignment target: %M" expr)))
   expr)
