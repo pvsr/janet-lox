@@ -16,6 +16,10 @@
          :let [line (string res)]
          :unless (= res :cancel)
          :until (= line "")]
+    (var line (string/trim line))
+    (unless (or (string/has-suffix? ";" line)
+                (string/has-suffix? "}" line))
+      (set line (string/join [line ";"])))
     (try (process line) ([err] (printf "error: %s" err)))))
 
 (defn main [_ &opt path & args]
