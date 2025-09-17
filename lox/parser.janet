@@ -45,7 +45,7 @@
                     (:consume parser :right-paren "Expect ')' after expression.")
                     [:grouping expr])))
 
-(defn- doCall [parser callee]
+(defn- do-call [parser callee]
   (def args @[])
   (unless (:check parser :right-paren)
     (array/push args (expression parser))
@@ -59,7 +59,7 @@
 (defn- call [parser]
   (var expr (primary parser))
   (while (:match parser :left-paren)
-    (set expr (doCall parser expr)))
+    (set expr (do-call parser expr)))
   expr)
 
 (defn- unary [parser]
