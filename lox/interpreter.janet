@@ -32,15 +32,18 @@
      token (errorf "Unknown operator %q" token))
     left right))
 
-(defn- declare-var [name]
+(defn- declare-var [{:token [_ name]}]
   (setdyn name @[]))
 
-(defn- set-var [name val]
+(defn- define-var [{:token [_ name]} val]
+  (setdyn name @[val]))
+
+(defn- set-var [{:token [_ name]} val]
   (if-let [ref (dyn name)]
     (do (array/clear ref) (array/push ref val))
     (errorf "Undefined variable '%s'." name)))
 
-(defn- get-var [name]
+(defn- get-var [{:token [_ name]}]
   (if-let [@[val] (dyn name)]
     val
     (errorf "Undefined variable '%s'." name)))
@@ -54,8 +57,16 @@
     [:logical left op right] (case ((op :token) 0)
                                :or (if-let [left (evaluate left)] left (evaluate right))
                                :and (if-let [left (evaluate left)] (evaluate right) left))
-    [:assign {:token [:ident name]} value] (set-var name (evaluate value))
-    [:variable {:token [:ident name]}] (get-var name)
+    [:assign name value] (set-var name (evaluate value))
+    [:variable name] (get-var name)
+    [:call callee paren args] (do
+                                (def callee (evaluate callee))
+                                (unless (has-key? callee :fun)
+                                  (error "Can only call functions and classes."))
+                                (def {:fun callee :arity arity} callee)
+                                (unless (= arity (length args))
+                                  (errorf "Expected %d arguments but got %d." arity (length args)))
+                                (callee ;(map evaluate args)))
     [ty] (errorf "Unknown expression type %s" ty)
     (errorf "Invalid expression %q" expr)))
 
@@ -72,20 +83,37 @@
                                  nil "nil"
                                  val (string val)))
     [:expr expr] (xprintf (dyn :expr-out @"") "%Q" (evaluate expr))
-    # [:return word value] (throw return)
+    [:return word val] (yield (evaluate val))
     [:if cond then else] (do
                            (cond
                              (evaluate cond) (execute then)
                              (not (nil? else)) (execute else)))
     [:while cond body] (while (evaluate cond) (execute body))
     [:block stmts] (execute-block stmts)
-    [:var {:token [:ident name]} init] (let [val (and init (evaluate init))]
-                                         (declare-var name)
-                                         (when init (set-var name val)))
+    [:var name init] (let [val (and init (evaluate init))]
+                       (declare-var name)
+                       (when init (set-var name val)))
+    [:fun name params body]
+    (let [fun (fn [& args]
+                (def f (fiber/new
+                         (fn []
+                           (loop [i :range [(length params)]
+                                  :let [name (params i) arg (args i)]]
+                             (define-var name arg))
+                           (execute-block body))
+                         # inherit env, catch `yield`
+                         :iy))
+                (resume f)
+                (fiber/last-value f))]
+      (define-var name {:fun fun :arity (length params)}))
     [ty] (errorf "Unknown statement type %s" ty)
     (errorf "Invalid statement %q" stmt)))
 
+(defn- define-fun [name arity fun]
+  (setdyn name @[{:arity arity :fun fun}]))
+
 (defn interpret [stmts]
-  (setdyn :locals @{})
+  (define-fun "clock" 0 |(os/clock :realtime :int))
+  (define-fun "toString" 1 string)
   # TODO error handling
   (each stmt stmts (execute stmt)))

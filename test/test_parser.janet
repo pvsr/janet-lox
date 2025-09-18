@@ -55,9 +55,9 @@
 (defn scan-parse [input] (parse (scan input)))
 
 (test (scan-parse "var three;")
-  @[[:var
-     {:line 1 :token [:ident "three"]}
-     nil]])
+      @[[:var
+         {:line 1 :token [:ident "three"]}
+         nil]])
 (test (scan-parse "var three = 1 + 2; print three;")
       @[[:var {:line 1 :token [:ident "three"]}
          [:binary
@@ -65,3 +65,17 @@
           {:line 1 :token [:plus]}
           [:literal 2]]]
         [:print [:variable {:line 1 :token [:ident "three"]}]]])
+(test (scan-parse "one();")
+      @[[:expr
+         [:call
+          [:variable
+           {:line 1 :token [:ident "one"]}]
+          {:line 1 :token [:right-paren]}
+          @[]]]])
+(test (scan-parse "add(1, 2);")
+      @[[:expr
+         [:call
+          [:variable
+           {:line 1 :token [:ident "add"]}]
+          {:line 1 :token [:right-paren]}
+          @[[:literal 1] [:literal 2]]]]])
