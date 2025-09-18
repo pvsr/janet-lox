@@ -3,11 +3,11 @@
 (import ./interpreter)
 
 (defn process [contents]
-  (-> contents
-      scanner/scan
-      parser/make-parser
-      :parse
-      interpreter/interpret))
+  (with-dyns [] (-> contents
+                    scanner/scan
+                    parser/make-parser
+                    :parse
+                    interpreter/interpret)))
 
 (defn run-repl [process]
   (os/sigaction :int nil)

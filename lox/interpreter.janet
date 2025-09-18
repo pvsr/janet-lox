@@ -73,9 +73,7 @@
 (var execute nil)
 
 (defn- execute-block [stmts]
-  # open new scope
-  (with-dyns []
-    (each stmt stmts (execute stmt))))
+  (each stmt stmts (execute stmt)))
 
 (varfn execute [stmt]
   (match stmt
@@ -89,20 +87,21 @@
                              (evaluate cond) (execute then)
                              (not (nil? else)) (execute else)))
     [:while cond body] (while (evaluate cond) (execute body))
-    [:block stmts] (execute-block stmts)
+    [:block stmts] (with-dyns [] (execute-block stmts))
     [:var name init] (let [val (and init (evaluate init))]
                        (declare-var name)
                        (when init (set-var name val)))
     [:fun name params body]
-    (let [fun (fn [& args]
+    (let [env (table/clone (fiber/getenv (fiber/current)))
+          fun (fn [& args]
                 (def f (fiber/new
                          (fn []
                            (loop [i :range [(length params)]
                                   :let [name (params i) arg (args i)]]
                              (define-var name arg))
                            (execute-block body))
-                         # inherit env, catch `yield`
-                         :iy))
+                         :y # yield
+                         (table/clone env)))
                 (resume f)
                 (fiber/last-value f))]
       (define-var name {:fun fun :arity (length params)}))
