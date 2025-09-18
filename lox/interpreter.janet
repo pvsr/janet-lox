@@ -83,7 +83,7 @@
                                  nil "nil"
                                  val (string val)))
     [:expr expr] (xprintf (dyn :expr-out @"") "%Q" (evaluate expr))
-    [:return word val] (yield (evaluate val))
+    [:return word val] (yield (when val (evaluate val)))
     [:if cond then else] (do
                            (cond
                              (evaluate cond) (execute then)

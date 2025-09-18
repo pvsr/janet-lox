@@ -54,6 +54,16 @@
   52
   102
 `)
+(test-stdout (process `
+  fun p() {
+    print 1;
+    return;
+    print 2;
+  }
+  p();
+`) `
+  1
+`)
 
 (test-error (process "none = nil;") "Undefined variable 'none'.")
 (test-error (process "print none;") "Undefined variable 'none'.")
