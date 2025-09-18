@@ -56,7 +56,7 @@
   1.1
 `)
 (test-stdout (execute [:print [:literal "one"]]) `
-  "one"
+  one
 `)
 (test-stdout (execute [:if [:literal true] [:print [:literal 1]] nil]) `
   1

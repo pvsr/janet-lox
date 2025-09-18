@@ -68,7 +68,9 @@
 
 (varfn execute [stmt]
   (match stmt
-    [:print expr] (printf "%q" (evaluate expr))
+    [:print expr] (printf "%s" (match (evaluate expr)
+                                 nil "nil"
+                                 val (string val)))
     [:expr expr] (xprintf (dyn :expr-out @"") "%Q" (evaluate expr))
     # [:return word value] (throw return)
     [:if cond then else] (do
