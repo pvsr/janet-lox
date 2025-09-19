@@ -1,0 +1,4 @@
+#!/usr/bin/env janet
+(import lox/main)
+
+(main/main ;(dyn :args))

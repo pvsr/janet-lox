@@ -16,7 +16,7 @@
         ] (system: mkOutputs nixpkgs.legacyPackages.${system});
     in
     {
-      packages = forAllSystems (pkgs: {
+      packages = forAllSystems (pkgs: rec {
         spork = pkgs.stdenv.mkDerivation rec {
           pname = "spork";
           version = "1.0.0";
@@ -43,24 +43,27 @@
           version = "0.0.1";
           src = ./.;
           dontConfigure = true;
-          buildInputs = [
-            pkgs.janet
-            self.packages.${pkgs.system}.spork
-          ];
-          buildPhase = ''
-            janet-pm build
-          '';
+          buildInputs = [ pkgs.janet ];
+          nativeBuildInputs = [ pkgs.makeWrapper ];
           installPhase = ''
+            mkdir $out
+            JANET_PATH=$out janet --install .
             mkdir -p $out/bin
-            mv _build/release/lox $out/bin
+            mv bin/lox $out/bin/lox
+            wrapProgram $out/bin/lox --set JANET_PATH $out
           '';
           doInstallCheck = true;
           installCheckPhase = ''
-            echo 'print 1;' | $out/bin/lox
+            $out/bin/lox << EOF
+            fun add(x, y) {
+              return x + y;
+            }
+            print add(10, 5);
+            EOF | grep 15
           '';
           meta.mainProgram = "lox";
         };
-        default = self.packages.${pkgs.system}.lox;
+        default = lox;
       });
 
       apps = forAllSystems (pkgs: {
@@ -73,10 +76,10 @@
 
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
-          packages = [
+          packages = with self.packages.${pkgs.system}; [
             pkgs.janet
-            self.packages.${pkgs.system}.spork
-            self.packages.${pkgs.system}.lox
+            spork
+            lox
           ];
         };
       });
