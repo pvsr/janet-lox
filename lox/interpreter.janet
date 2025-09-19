@@ -80,7 +80,8 @@
     [:print expr] (printf "%s" (match (evaluate expr)
                                  nil "nil"
                                  val (string val)))
-    [:expr expr] (xprintf (dyn :expr-out @"") "%Q" (evaluate expr))
+    [:expr expr] (let [val (evaluate expr)]
+                   (if-let [out (dyn :expr-out)] (xprintf out "%Q" val)))
     [:return word val] (yield (when val (evaluate val)))
     [:if cond then else] (do
                            (cond
