@@ -118,3 +118,4 @@
 (test-error (process "fun add(x) { return x + 1; } print add();") "Expected 1 arguments but got 0.")
 (test-error (process "fun add(x) { return x + 1; } print add(1, 2);") "Expected 1 arguments but got 2.")
 (test-error (process "var x = 1; x();") "Can only call functions and classes.")
+(test-error (process "var x = 1; var x = 2; print x;") "Already a variable named 'x' in this scope.")

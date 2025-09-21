@@ -19,5 +19,9 @@ For instance the visitor pattern is replaced by pattern matching
  - [x] Control Flow
  - [x] Functions
  - [ ] Resolving and Binding
+   - [x] Lexical scope
+   - [ ] Prevent self-referential initializer
+   - [x] Prevent variable name reuse in same scope
+   - [ ] Prevent top-level return
  - [ ] Classes
  - [ ] Inheritance

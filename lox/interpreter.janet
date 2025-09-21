@@ -33,6 +33,8 @@
     left right))
 
 (defn- declare-var [{:token [_ name]}]
+  (when (table/rawget (curenv) name)
+    (errorf "Already a variable named '%s' in this scope." name))
   (setdyn name @[]))
 
 (defn- define-var [{:token [_ name]} val]
@@ -94,7 +96,8 @@
                        (when init (set-var name val)))
     [:fun name params body]
     (let [arity (length params)
-          env (table/clone (curenv))
+          closure (table/clone (curenv))
+          env (table/setproto @{} closure)
           call (fn [args]
                  (loop [i :range [arity]
                         :let [name (params i) arg (args i)]]
