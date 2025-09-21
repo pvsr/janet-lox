@@ -1,5 +1,8 @@
 (use judge)
-(use ../lox/main)
+(import ../lox/main)
+
+(defn- process [& args]
+  (with-dyns [] (main/process ;args)))
 
 (test-stdout (process "print 2 * (1 + 2);") `
   6
