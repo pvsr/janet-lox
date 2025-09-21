@@ -93,19 +93,20 @@
                        (declare-var name)
                        (when init (set-var name val)))
     [:fun name params body]
-    (let [env (table/clone (fiber/getenv (fiber/current)))
+    (let [arity (length params)
+          env (table/clone (curenv))
+          call (fn [args]
+                 (loop [i :range [arity]
+                        :let [name (params i) arg (args i)]]
+                   (define-var name arg))
+                 (execute-block body))
           fun (fn [& args]
-                (def f (fiber/new
-                         (fn []
-                           (loop [i :range [(length params)]
-                                  :let [name (params i) arg (args i)]]
-                             (define-var name arg))
-                           (execute-block body))
-                         :y # yield
-                         (table/clone env)))
-                (resume f)
+                (def f (fiber/new call
+                                  :y # catch yield
+                                  (table/clone env)))
+                (resume f args)
                 (fiber/last-value f))]
-      (define-var name {:fun fun :arity (length params)}))
+      (define-var name {:fun fun :arity arity}))
     [ty] (errorf "Unknown statement type %s" ty)
     (errorf "Invalid statement %q" stmt)))
 
